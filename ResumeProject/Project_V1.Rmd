@@ -1,0 +1,72 @@
+---
+title: "ResumeProject"
+author: "Christine Iyer"
+date: "2/20/2019"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+library(knitr)
+library(tidyverse)
+library(DT)
+library(lubridate)
+
+```
+
+```{r eval=FALSE, include=FALSE}
+fileMine <- read_excel("/Users/christineiyer/Downloads/Santander.xlsx")
+head(fileMine)
+unique(fileMine$satisfaction_v2)
+#not this data
+```
+
+```{r eval=FALSE, include=FALSE}
+filrMine <- read.csv("/Users/christineiyer/Documents/WexProject/twcs.csv", header = T, stringsAsFactors = F)
+head(filrMine)
+#not this data
+```
+```{r}
+consumerData <- read.csv("/Users/christineiyer/Documents/WexProject/Consumer_Complaints.csv", header = T, stringsAsFactors = F)
+```
+
+
+
+
+```{r}
+#library(tidyverse)
+consumerDataDate <- consumerData %>% mutate(Date.received = as.POSIXct(Date.received, format = "%m/%d/%Y"), Date.sent.to.company = as.POSIXct(Date.sent.to.company, format = "%m/%d/%Y"))
+#kable(head(consumerDataDate))
+
+
+
+```
+
+
+```{r fig.height=30, fig.width=8}
+consumerDataDateY <- consumerDataDate %>% filter(Product != "22806     4") %>% mutate(Year = year(Date.received)) %>% group_by(Company, Product, Year) %>% summarise(n = n()) 
+
+companies <- c("BANK OF AMERICA, NATIONAL ASSOCIATION", "EQUIFAX, INC.", "Experian Information Solutions Inc.", "WELLS FARGO & COMPANY", "TRANSUNION INTERMEDIATE HOLDINGS, INC.", "JPMORGAN CHASE & CO.")
+
+selectCompanies <- consumerDataDateY %>% filter(Company %in% companies) %>% mutate(zScore = round((n - mean(n))/sd(n), digits=2))
+
+head(selectCompanies)
+ggplot(selectCompanies, aes(x= Year, y = zScore, group = Company))+ 
+  #geom_line(aes(color = Company))+
+  geom_smooth(se = FALSE, aes(color = Company)) + 
+  facet_wrap(~Product, ncol = 1)
+```
+
+
+
+```{r fig.height=20, fig.width=8}
+# consumerDataDate %>% mutate(Year = year(Date.received)) %>% group_by(Year, Product, Company) %>% summarise(n = n()) %>% ggplot(aes(x= Year, y = n, fill = Product)) + geom_bar(stat = "identity", position = "dodge") + facet_wrap(~Company, ncol = 2)
+
+
+```
+
+
+
