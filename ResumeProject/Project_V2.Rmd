@@ -45,6 +45,9 @@ names(AnotherX_1)
 
 ```{r}
 Citi <- AnotherX_1 %>% filter(Company == "Citibank")
+head(unique(Citi$Consumer.complaint.narrative))
+head(Citi %>% filter(str_detect(str_to_lower(Company.response.to.consumer), "xxxx"))
+)
 ```
 
  
@@ -169,7 +172,7 @@ dim(Citi)
 ```
 
 ```{r}
-undesirable_words <- c("Citibank", "Citi")
+undesirable_words <- c("Citibank", "Citi", "xxxx", "XXXX", "yyyy", "YYYY","/n")
 ```
 ```{r}
 data_words_filtered <- Citi %>%
@@ -201,7 +204,7 @@ full_word_count <- data_words_filtered %>%
 full_word_count[1:10,] %>% 
   ungroup(num_words, Complaint.ID) %>% 
   mutate(num_words = color_bar("lightyellow")(num_words)) %>% 
-  mutate(song = color_tile("lightpink", "lightpink")(Company.response.to.consumer)) %>% 
+  mutate(Company.response.to.consumer = color_tile("lightpink", "lightpink")(Company.response.to.consumer)) %>% 
   kable("html", escape = F, align = "c", caption = "Tickets With Highest Word Count") %>% 
   kable_styling(bootstrap_options = c("striped", "condensed", "bordered"), full_width = F)
 ```
@@ -214,6 +217,10 @@ new_sentiments <- sentiments %>% #From the tidytext package
   group_by(lexicon) %>%
   mutate(words_in_lexicon = n_distinct(word)) %>%
   ungroup()
+
+head(new_sentiments)
+unique(new_sentiments$sentiment)
+
 data_words_filtered%>%
   mutate(words_in_call = n_distinct(word)) %>%
   inner_join(new_sentiments) %>%
@@ -226,10 +233,13 @@ data_words_filtered%>%
   mutate(lex_match_words = color_bar("lightpink")(lex_match_words),
          lexicon = color_tile("lightgreen", "lightgreen")(lexicon)) %>%
   my_kable_styling(caption = "Lyrics Found In Lexicons")
+dim(new_sentiments)
 ```
 
 
 ```{r fig.height=100, fig.width=9}
+
+head(data_words_filtered)
 head(data_words_filtered)
 jane_austin_sentiment <- data_words_filtered %>% 
   inner_join(get_sentiments("nrc")) %>%
@@ -248,6 +258,14 @@ ggplot(jane_austin_sentiment, aes(index, sentiment, fill = Company.response.to.c
 
 Find which words are more commonly used in the unhappy consumers narratives and focus on using these types of narratives for cases to consider for intervention.
 
+
+### Most commmon words
+
+```{r}
+
+```
+
+
   
 
 **The three sets of plots above tell a story.**
@@ -260,5 +278,49 @@ Find which words are more commonly used in the unhappy consumers narratives and 
 * Late Fees
 * Fraud Issues
 
+```{r}
+head(Citi)
+```
+```{r}
+#library(qdap)
+library(dplyr)
+library(tm)
+library(wordcloud)
+library(plotrix)
+library(dendextend)
+library(ggplot2)
+library(ggthemes)
+#library(RWeka)
+library(reshape2)
+library(quanteda)
+```
+```{r}
+corpus_review <- Corpus(VectorSource(Citi$Consumer.complaint.narrative))
+corpus_review=tm_map(corpus_review, tolower)
+corpus_review=tm_map(corpus_review, removePunctuation)
+corpus_review=tm_map(corpus_review, removeWords, stopwords("english"))
+corpus_review=tm_map(corpus_review, removeWords,c("also", "get","like", "company", "made", "can", "im", "dress", "just", "i", "xxxx", "yyyy", "/n"))
+corpus_review=tm_map(corpus_review, stemDocument)
 
+head(corpus_review)
+
+
+s <- SimpleCorpus(VectorSource(unlist(lapply(corpus_review, as.character))))
+
+
+#term_count <- termFreq(s, 20)
+```
+```{r}
+head(data_words_filtered)
+```
+### Word Frequency
+```{r}
+
+abcde <- data_words_filtered %>% inner_join(get_sentiments("nrc")) %>%
+  count(word, index, sentiment, Company.response.to.consumer )
+
+head(abcde)
+abcde %>% mutate(sentimentN = ifelse(sentiment %in% c("anger", "disgust","fear", "negative","sadness"), "Negative", ifelse(sentiment %in% c("anticipation","surprise"), "Other", "Positive"))) %>% group_by(index, sentimentN) %>% summarise(n = n()) %>% ggplot(.,aes(x = index, y = n, group = sentimentN))+ geom_line()+ facet_wrap(~sentimentN, ncol = 3)
+ggplotly()
+```
 
