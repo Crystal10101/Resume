@@ -17,6 +17,13 @@ library(lubridate)
 library(tidyverse)
 library(knitr)
 library(plotly)
+library(tidytext)
+library(gridExtra) #viewing multiple plots together
+#text mining
+library(wordcloud2) #creative visualizations
+library(kableExtra)
+library(formattable)
+
 ```
 
 ### [Citicard Complaints](https://data.world/1947theindia/url-httpsdataworld1947theindiadrug-spending/workspace/file?agentid=dataquest&datasetid=bank-and-credit-card-complaints&filename=Credit_Card_Complaints.csv)
@@ -45,19 +52,19 @@ Citi <- AnotherX_1 %>% filter(Company == "Citibank")
 
 
 ```{r fig.height=20, fig.width=9}
-Citi_1 <- AnotherX_1 %>% filter(Company == "Citibank") %>% mutate(year = year(Date.received), month = month(Date.received),MonetaryRelief = 
-                  ifelse(Company.response.to.consumer == "In progress", "In progress", 
-                         ifelse(Company.response.to.consumer == "Untimely repsponse", "Untimely response", 
-                                ifelse(Company.response.to.consumer %in% c("Closed with monetary relief", "Closed with relief"), "Monetary Relief", "Non-Monetary Relief")))) %>% 
+Citi_1 <- AnotherX_1 %>% filter(Company == "Citibank") %>% mutate(year = year(Date.received), month = month(Date.received),MonetaryRelief =
+                  ifelse(Company.response.to.consumer == "In progress", "In progress",
+                         ifelse(Company.response.to.consumer == "Untimely repsponse", "Untimely response",
+                                ifelse(Company.response.to.consumer %in% c("Closed with monetary relief", "Closed with relief"), "Monetary Relief", "Non-Monetary Relief")))) %>%
   group_by(year, Issue, MonetaryRelief) %>% summarise(Count = n())
   
   
 # ggplot(Citi, aes(x = Company.response.to.consumer,fill = Company.response.to.consumer)) + geom_bar() + facet_wrap(~Issue, ncol = 3)
-head(Citi_1)
-ggplot(Citi_1, aes(x = year, y = Count, group = MonetaryRelief, color = MonetaryRelief)) + 
-  geom_line() + 
-  facet_wrap(~Issue, ncol = 3) 
-ggplotly()
+# head(Citi_1)
+# ggplot(Citi_1, aes(x = year, y = Count, group = MonetaryRelief, color = MonetaryRelief)) + 
+#   geom_line() + 
+#   facet_wrap(~Issue, ncol = 3) 
+# ggplotly()
 ```
 
 ```{r fig.height=20, fig.width=9}
@@ -67,39 +74,183 @@ ggplotly()
 ### Company.response.to.consumer
 
 ```{r fig.height=30, fig.width=9}
-plotCiti <- ggplot(Citi, aes(x = Date.received, color = Company.response.to.consumer, fill = Company.response.to.consumer)) + geom_area(stat = "bin")+ facet_wrap(~Issue, ncol = 3)
-ggplotly()
+# plotCiti <- ggplot(Citi, aes(x = Date.received, color = Company.response.to.consumer, fill = Company.response.to.consumer)) + geom_area(stat = "bin")+ facet_wrap(~Issue, ncol = 3)
+# ggplotly()
 ```
 
 
 ### Timely.response.
 
 ```{r fig.height=30, fig.width=9}
-plotCiti <- ggplot(Citi, aes(x = Date.received, color = Timely.response., fill = Timely.response.)) + geom_area(stat = "bin")+ facet_wrap(~Issue, ncol = 3)
-ggplotly()
+# plotCiti <- ggplot(Citi, aes(x = Date.received, color = Timely.response., fill = Timely.response.)) + geom_area(stat = "bin")+ facet_wrap(~Issue, ncol = 3)
+# ggplotly()
 ```
 
 ### Consumer.disputed.
 
 ```{r fig.height=30, fig.width=9}
-plotCiti <- ggplot(Citi, aes(x = Date.received, color = Consumer.disputed., fill = Consumer.disputed.)) + geom_area(stat = "bin")+ facet_wrap(~Issue, ncol = 3)
-ggplotly()
+# plotCiti <- ggplot(Citi, aes(x = Date.received, color = Consumer.disputed., fill = Consumer.disputed.)) + geom_area(stat = "bin")+ facet_wrap(~Issue, ncol = 3)
+# ggplotly()
 ```
 ```{r fig.height=25, fig.width=9}
-Citi %>% 
-  mutate(MonetaryRelief = 
-                  ifelse(Company.response.to.consumer == "In progress", "In progress", 
-                         ifelse(Company.response.to.consumer == "Untimely repsponse", "Untimely response", 
-                                ifelse(Company.response.to.consumer %in% c("Closed with monetary relief", "Closed with relief"), "Monetary Relief", "Non-Monetary Relief")))) %>%  
-  group_by(Date.received, Issue, MonetaryRelief) %>% summarise(Count = n()) %>% 
-  ggplot(., aes(x = Date.received, y = Count, group = MonetaryRelief, color = MonetaryRelief)) + 
-  geom_smooth(se = FALSE) + 
-  facet_wrap(~Issue, ncol = 3) 
-ggplotly()
+# Citi %>% 
+#   mutate(MonetaryRelief = 
+#                   ifelse(Company.response.to.consumer == "In progress", "In progress", 
+#                          ifelse(Company.response.to.consumer == "Untimely repsponse", "Untimely response", 
+#                                 ifelse(Company.response.to.consumer %in% c("Closed with monetary relief", "Closed with relief"), "Monetary Relief", "Non-Monetary Relief")))) %>%  
+#   group_by(Date.received, Issue, MonetaryRelief) %>% summarise(Count = n()) %>% 
+#   ggplot(., aes(x = Date.received, y = Count, group = MonetaryRelief, color = MonetaryRelief)) + 
+#   geom_smooth(se = FALSE) + 
+#   facet_wrap(~Issue, ncol = 3) 
+# ggplotly()
+```
+### Explore the language sentiments
+NRC lexicon matches best
+
+
+```{r}
+# head(Citi)
+# unique(Citi$Consumer.complaint.narrative)
+```
+```{r}
+#Customize the text tables for consistency using HTML formatting
+my_kable_styling <- function(dat, caption) {
+  kable(dat, "html", escape = FALSE, caption = caption) %>%
+  kable_styling(bootstrap_options = c("striped", "condensed", "bordered"),
+                full_width = FALSE)
+}
 ```
 
 
-** The three sets of plots above tell a story. **
+
+```{r}
+#glimpse(prince[139,])
+#str(prince[139, ]$Text, nchar.max = 300)
+fix.contractions <- function(doc) {
+  # "won't" is a special case as it does not expand to "wo not"
+  doc <- gsub("won't", "will not", doc)
+  doc <- gsub("can't", "can not", doc)
+  doc <- gsub("n't", " not", doc)
+  doc <- gsub("'ll", " will", doc)
+  doc <- gsub("'re", " are", doc)
+  doc <- gsub("'ve", " have", doc)
+  doc <- gsub("'m", " am", doc)
+  doc <- gsub("'d", " would", doc)
+  # 's could be 'is' or could be possessive: it has no expansion
+  doc <- gsub("'s", "", doc)
+  return(doc)
+}
+
+# fix (expand) contractions
+
+
+Citi$Consumer.complaint.narrative <- sapply(Citi$Consumer.complaint.narrative, fix.contractions)
+#range(prince$Date)
+```
+
+```{r}
+Citi <- Citi %>%  mutate(year = year(Date.received), month = month(Date.received)) 
+head(Citi)
+```
+
+
+```{r}
+# function to remove special characters
+removeSpecialChars <- function(x) gsub("[^a-zA-Z0-9 ]", " ", x)
+# remove special characters
+Citi$Consumer.complaint.narrative <- sapply(Citi$Consumer.complaint.narrative, removeSpecialChars)
+# convert everything to lower case
+Citi$Consumer.complaint.narrative <- sapply(Citi$Consumer.complaint.narrative, tolower)
+#str(prince[19, ]$Text, nchar.max = 300)
+#get facts about the full dataset
+#summary(prince)
+head(Citi)
+dim(Citi)
+```
+
+```{r}
+undesirable_words <- c("Citibank", "Citi")
+```
+```{r}
+data_words_filtered <- Citi %>%
+  mutate(index = as.numeric(paste0(year, ".", month))) %>% 
+  #breaks lyrics into words and puts them into a new column
+  unnest_tokens(word, Consumer.complaint.narrative) %>%
+  #takes out the stop words
+  anti_join(stop_words) %>%
+  #removes duplicate records
+  distinct() %>%
+  #removes (at the discretion of the analyst) undesirable words that were made into a vector)
+  filter(!word %in% undesirable_words) %>%
+  #removes words with less than 4 letters
+  filter(nchar(word) > 3)
+#class(prince_words_filtered)
+dim(data_words_filtered)
+head(data_words_filtered)
+```
+
+
+
+```{r}
+full_word_count <- data_words_filtered %>% 
+  #unnest_tokens(word, Consumer.complaint.narrative) %>% 
+  group_by(index, Company.response.to.consumer) %>% 
+  summarise(num_words = n()) %>% 
+  arrange(desc(num_words))
+
+full_word_count[1:10,] %>% 
+  ungroup(num_words, Complaint.ID) %>% 
+  mutate(num_words = color_bar("lightyellow")(num_words)) %>% 
+  mutate(song = color_tile("lightpink", "lightpink")(Company.response.to.consumer)) %>% 
+  kable("html", escape = F, align = "c", caption = "Tickets With Highest Word Count") %>% 
+  kable_styling(bootstrap_options = c("striped", "condensed", "bordered"), full_width = F)
+```
+```{r}
+new_sentiments <- sentiments %>% #From the tidytext package
+  #filter(lexicon != "loughran") %>% #Remove the finance lexicon
+  mutate( sentiment = ifelse(lexicon == "AFINN" & score >= 0, "positive",
+                              ifelse(lexicon == "AFINN" & score < 0,
+                                     "negative", sentiment))) %>%
+  group_by(lexicon) %>%
+  mutate(words_in_lexicon = n_distinct(word)) %>%
+  ungroup()
+data_words_filtered%>%
+  mutate(words_in_call = n_distinct(word)) %>%
+  inner_join(new_sentiments) %>%
+  group_by(lexicon, words_in_call, words_in_lexicon) %>%
+  summarise(lex_match_words = n_distinct(word)) %>%
+  ungroup() %>%
+  mutate(total_match_words = sum(lex_match_words), #Not used but good to have
+         match_ratio = lex_match_words / words_in_call) %>%
+  select(lexicon, lex_match_words,  words_in_call, match_ratio) %>%
+  mutate(lex_match_words = color_bar("lightpink")(lex_match_words),
+         lexicon = color_tile("lightgreen", "lightgreen")(lexicon)) %>%
+  my_kable_styling(caption = "Lyrics Found In Lexicons")
+```
+
+
+```{r fig.height=100, fig.width=9}
+head(data_words_filtered)
+jane_austin_sentiment <- data_words_filtered %>% 
+  inner_join(get_sentiments("nrc")) %>%
+  count(word, index, sentiment, Company.response.to.consumer ) %>%
+  spread(sentiment, n, fill = 0) %>%
+  mutate(sentiment = positive - negative)
+
+head(jane_austin_sentiment)
+
+head(data_words_filtered)
+ggplot(jane_austin_sentiment, aes(index, sentiment, fill = Company.response.to.consumer)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~Company.response.to.consumer , ncol = 2, scales = "free_x")
+  
+```
+
+Find which words are more commonly used in the unhappy consumers narratives and focus on using these types of narratives for cases to consider for intervention.
+
+  
+
+**The three sets of plots above tell a story.**
 
 * Interest Rates
 * Billing Disputes
