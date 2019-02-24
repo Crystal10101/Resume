@@ -13,29 +13,51 @@ knitr::opts_chunk$set(
 )
 ```
 ```{r fig.height=20, fig.width=9}
+library(lubridate)
 library(tidyverse)
 library(knitr)
 library(plotly)
 ```
 
-```{r}
+### [Citicard Complaints](https://data.world/1947theindia/url-httpsdataworld1947theindiadrug-spending/workspace/file?agentid=dataquest&datasetid=bank-and-credit-card-complaints&filename=Credit_Card_Complaints.csv)
 
+
+```{r}
 X <- read.csv("/Users/christineiyer/Downloads/Bank_Account_or_Service_Complaints.csv", header = T, stringsAsFactors = F)
-X_1 <- X %>% mutate(Date.received = as.Date(Date.received, format = "%m/%d/%Y"), Date.sent.to.company = as.Date(Date.sent.to.company, format = "%m/%d/%Y"))
+X_1 <- X %>% mutate(Date.received = as.POSIXct(Date.received, format = "%m/%d/%Y"), Date.sent.to.company = as.POSIXct(Date.sent.to.company, format = "%m/%d/%Y"))
 tail(X_1)
 
 AnotherX <- read.csv("/Users/christineiyer/Downloads/Credit_Card_Complaints.csv", header = T, stringsAsFactors = F)
-AnotherX_1 <- AnotherX %>% mutate(Date.received = as.Date(Date.received, format = "%m/%d/%Y"), Date.sent.to.company = as.Date(Date.sent.to.company, format = "%m/%d/%Y"))
+AnotherX_1 <- AnotherX %>% mutate(Date.received = as.POSIXct(Date.received, format = "%m/%d/%Y"), Date.sent.to.company = as.POSIXct(Date.sent.to.company, format = "%m/%d/%Y"))
 names(AnotherX_1)
 ```
 ```{r fig.height=20, fig.width=8}
 # ggplot(AnotherX, aes(x = Company,fill = Company)) + geom_bar() + facet_wrap(~Issue, ncol = 3)
 ```
 
-```{r fig.height=20, fig.width=9}
-Citi <- AnotherX_1 %>% filter(Company == "Citibank")
-# ggplot(Citi, aes(x = Company.response.to.consumer,fill = Company.response.to.consumer)) + geom_bar() + facet_wrap(~Issue, ncol = 3)
 
+```{r}
+Citi <- AnotherX_1 %>% filter(Company == "Citibank")
+```
+
+ 
+  
+
+
+```{r fig.height=20, fig.width=9}
+Citi_1 <- AnotherX_1 %>% filter(Company == "Citibank") %>% mutate(year = year(Date.received), month = month(Date.received),MonetaryRelief = 
+                  ifelse(Company.response.to.consumer == "In progress", "In progress", 
+                         ifelse(Company.response.to.consumer == "Untimely repsponse", "Untimely response", 
+                                ifelse(Company.response.to.consumer %in% c("Closed with monetary relief", "Closed with relief"), "Monetary Relief", "Non-Monetary Relief")))) %>% 
+  group_by(year, Issue, MonetaryRelief) %>% summarise(Count = n())
+  
+  
+# ggplot(Citi, aes(x = Company.response.to.consumer,fill = Company.response.to.consumer)) + geom_bar() + facet_wrap(~Issue, ncol = 3)
+head(Citi_1)
+ggplot(Citi_1, aes(x = year, y = Count, group = MonetaryRelief, color = MonetaryRelief)) + 
+  geom_line() + 
+  facet_wrap(~Issue, ncol = 3) 
+ggplotly()
 ```
 
 ```{r fig.height=20, fig.width=9}
@@ -86,4 +108,6 @@ ggplotly()
 * Delinquent Accounts
 * Late Fees
 * Fraud Issues
+
+
 
