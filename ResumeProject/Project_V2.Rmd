@@ -1,0 +1,89 @@
+---
+title: "Project_V1"
+author: "Christine Iyer"
+date: "2/21/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+```{r fig.height=20, fig.width=9}
+library(tidyverse)
+library(knitr)
+library(plotly)
+```
+
+```{r}
+
+X <- read.csv("/Users/christineiyer/Downloads/Bank_Account_or_Service_Complaints.csv", header = T, stringsAsFactors = F)
+X_1 <- X %>% mutate(Date.received = as.Date(Date.received, format = "%m/%d/%Y"), Date.sent.to.company = as.Date(Date.sent.to.company, format = "%m/%d/%Y"))
+tail(X_1)
+
+AnotherX <- read.csv("/Users/christineiyer/Downloads/Credit_Card_Complaints.csv", header = T, stringsAsFactors = F)
+AnotherX_1 <- AnotherX %>% mutate(Date.received = as.Date(Date.received, format = "%m/%d/%Y"), Date.sent.to.company = as.Date(Date.sent.to.company, format = "%m/%d/%Y"))
+names(AnotherX_1)
+```
+```{r fig.height=20, fig.width=8}
+# ggplot(AnotherX, aes(x = Company,fill = Company)) + geom_bar() + facet_wrap(~Issue, ncol = 3)
+```
+
+```{r fig.height=20, fig.width=9}
+Citi <- AnotherX_1 %>% filter(Company == "Citibank")
+# ggplot(Citi, aes(x = Company.response.to.consumer,fill = Company.response.to.consumer)) + geom_bar() + facet_wrap(~Issue, ncol = 3)
+
+```
+
+```{r fig.height=20, fig.width=9}
+# Citi %>% group_by(Date.received, Company.response.to.consumer, Issue) %>% summarise(Count = n()) %>%  ggplot(., aes(x = Date.received, fill = Company.response.to.consumer)) + geom_area(stat = "bin")+ facet_wrap(~Issue, ncol = 3)
+```
+
+### Company.response.to.consumer
+
+```{r fig.height=30, fig.width=9}
+plotCiti <- ggplot(Citi, aes(x = Date.received, color = Company.response.to.consumer, fill = Company.response.to.consumer)) + geom_area(stat = "bin")+ facet_wrap(~Issue, ncol = 3)
+ggplotly()
+```
+
+
+### Timely.response.
+
+```{r fig.height=30, fig.width=9}
+plotCiti <- ggplot(Citi, aes(x = Date.received, color = Timely.response., fill = Timely.response.)) + geom_area(stat = "bin")+ facet_wrap(~Issue, ncol = 3)
+ggplotly()
+```
+
+### Consumer.disputed.
+
+```{r fig.height=30, fig.width=9}
+plotCiti <- ggplot(Citi, aes(x = Date.received, color = Consumer.disputed., fill = Consumer.disputed.)) + geom_area(stat = "bin")+ facet_wrap(~Issue, ncol = 3)
+ggplotly()
+```
+```{r fig.height=25, fig.width=9}
+Citi %>% 
+  mutate(MonetaryRelief = 
+                  ifelse(Company.response.to.consumer == "In progress", "In progress", 
+                         ifelse(Company.response.to.consumer == "Untimely repsponse", "Untimely response", 
+                                ifelse(Company.response.to.consumer %in% c("Closed with monetary relief", "Closed with relief"), "Monetary Relief", "Non-Monetary Relief")))) %>%  
+  group_by(Date.received, Issue, MonetaryRelief) %>% summarise(Count = n()) %>% 
+  ggplot(., aes(x = Date.received, y = Count, group = MonetaryRelief, color = MonetaryRelief)) + 
+  geom_smooth(se = FALSE) + 
+  facet_wrap(~Issue, ncol = 3) 
+ggplotly()
+```
+
+
+** The three sets of plots above tell a story. **
+
+* Interest Rates
+* Billing Disputes
+* Billing Statements
+* Customer Service
+* Delinquent Accounts
+* Late Fees
+* Fraud Issues
+
